@@ -1,7 +1,7 @@
 # Awesome README Template
 
 <!--Badges-->
-![MIT License][license-shield] ![Repository Size][repository-size-shield] ![Issue Closed][issue-closed-shield]
+![MIT License][license-shield]
 
 <!--Project Buttons-->
  [![Readme in Korean][readme-ko-shield]][readme-ko-url] [![View Demo][view-demo-shield]][view-demo-url] [![Report bug][report-bug-shield]][report-bug-url] [![Request feature][request-feature-shield]][request-feature-url]
