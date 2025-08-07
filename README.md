@@ -1,7 +1,7 @@
 # Awesome README Template
 
 <!--배지-->
-![MIT License][license-shield] ![Java][license-shield]
+![MIT License][license-shield] ![Java][spring-shield]
 
 # Table of Contents
 - [[1] Project Overview](#1-project-overview)
@@ -138,8 +138,8 @@ npm run start
 
 <!--URL for Badges-->
 [license-shield]: https://img.shields.io/github/license/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=04B4AE
-[repository-size-shield]: https://img.shields.io/github/repo-size/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=BE81F7
-[issue-closed-shield]: https://img.shields.io/github/issues-closed/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=FE9A2E
+[spring-shield]: https://img.shields.io/github/spring/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=BE81F7
+[google-vision-shield]: https://img.shields.io/github/issues-closed/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=FE9A2E
 
 <!--URL for Buttons-->
 [readme-en-shield]: https://img.shields.io/badge/-readme%20in%20english-2E2E2E?style=for-the-badge
