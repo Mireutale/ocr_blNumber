@@ -1,10 +1,7 @@
 # Awesome README Template
 
 <!--배지-->
-![MIT License][license-shield] ![Repository Size][repository-size-shield] ![Issue Closed][issue-closed-shield]
-
-<!--프로젝트 버튼-->
- [![Readme in English][readme-en-shield]][readme-en-url] [![View Demo][view-demo-shield]][view-demo-url] [![Report bug][report-bug-shield]][report-bug-url] [![Request feature][request-feature-shield]][request-feature-url]
+![MIT License][license-shield]
 
 <!--프로젝트 대문 이미지-->
 ![Project Title](doc/images/project-title.png)
