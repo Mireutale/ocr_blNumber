@@ -3,9 +3,6 @@
 <!--배지-->
 ![MIT License][license-shield]
 
-<!--프로젝트 대문 이미지-->
-![Project Title](doc/images/project-title.png)
-
 # Table of Contents
 - [[1] Project Overview](#1-project-overview)
   - [Key Features](#key-features)
