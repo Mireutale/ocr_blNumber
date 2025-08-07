@@ -1,7 +1,7 @@
 # Awesome README Template
 
 <!--배지-->
-![MIT License][license-shield], ![Java][license-shield]
+![MIT License][license-shield] ![Java][license-shield]
 
 # Table of Contents
 - [[1] Project Overview](#1-project-overview)
