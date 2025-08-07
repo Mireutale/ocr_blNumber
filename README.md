@@ -138,7 +138,7 @@ npm run start
 
 <!--URL for Badges-->
 [license-shield]: https://img.shields.io/github/license/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=04B4AE
-[spring-shield]: https://img.shields.io/github/spring/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=BE81F7
+[spring-shield]: https://img.shields.io/badge/spring-anytext?color=%236DB33F
 [google-vision-shield]: https://img.shields.io/github/issues-closed/devyoujin/awesome-readme-template?labelColor=D8D8D8&color=FE9A2E
 
 <!--URL for Buttons-->
