@@ -39,6 +39,12 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	
+	// PDF 처리용 의존성
+	implementation("org.apache.pdfbox:pdfbox:2.0.29")
+	
+	// JSON 처리용 의존성
+	implementation("com.fasterxml.jackson.core:jackson-databind")
 }
 
 tasks.withType<Test> {
