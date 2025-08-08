@@ -1,6 +1,7 @@
 name: "⚙️ Fix"
 description: "오류 수정 또는 리팩토링"
 labels: ["Fix"]
+title: "Fix: "
 body:
   - type: textarea
     attributes:
