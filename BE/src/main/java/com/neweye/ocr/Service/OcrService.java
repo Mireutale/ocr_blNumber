@@ -1,143 +1,108 @@
 package com.neweye.ocr.Service;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import javax.imageio.ImageIO;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Base64;
+import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class OcrService {
 
-    @Value("${google.vision.api.key}")
-    private String apiKey;
-
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-
-    public OcrService() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
-    }
-
-    /**
-     * 파일을 받아서 OCR 처리를 수행합니다.
-     * @param file 업로드된 파일 (PDF 또는 이미지)
-     * @return OCR 처리된 텍스트
-     */
-    public String processOcr(MultipartFile file) throws Exception {
-        String text;
-        
-        if (file.getOriginalFilename().endsWith(".pdf")) {
-            // PDF 파일 처리
-            List<BufferedImage> images = pdfToImages(file);
-            StringBuilder sb = new StringBuilder();
-            for (BufferedImage img : images) {
-                sb.append(callGoogleVision(img));
-            }
-            text = sb.toString();
-        } else {
-            // 이미지 파일 처리
-            BufferedImage img = ImageIO.read(file.getInputStream());
-            text = callGoogleVision(img);
-        }
-        
-        return text;
-    }
-
-    /**
-     * PDF 파일을 이미지로 변환합니다.
-     * @param file PDF 파일
-     * @return 변환된 이미지 리스트
-     */
-    private List<BufferedImage> pdfToImages(MultipartFile file) throws Exception {
-        List<BufferedImage> images = new ArrayList<>();
-        try (PDDocument document = PDDocument.load(file.getInputStream())) {
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
-            for (int page = 0; page < document.getNumberOfPages(); ++page) {
-                BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300);
-                images.add(bim);
-            }
-        }
-        return images;
-    }
+    @Autowired
+    private GoogleVisionService googleVisionService;
     
+    @Autowired
+    private ImageProcessingService imageProcessingService;
+    
+    @Autowired
+    private BlNumberExtractorService blNumberExtractorService;
+
     /**
-     * Google Vision API를 호출하여 OCR을 수행합니다.
-     * @param image 처리할 이미지
-     * @return OCR 결과 텍스트
+     * OCR 결과를 담는 내부 클래스
      */
-    private String callGoogleVision(BufferedImage image) {
-        try {
-            if (apiKey == null || apiKey.isEmpty()) {
-                throw new RuntimeException("Google Vision API key is not configured");
-            }
+    public static class OcrResult {
+        private final String fullText;
+        private final List<String> blNumbers;
 
-            // 이미지를 Base64로 인코딩
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", baos);
-            String base64Image = Base64.getEncoder().encodeToString(baos.toByteArray());
-
-            // Google Vision API 요청 본문 생성
-            ObjectNode requestBody = objectMapper.createObjectNode();
-            ArrayNode requests = objectMapper.createArrayNode();
-            ObjectNode request = objectMapper.createObjectNode();
-            
-            ObjectNode imageNode = objectMapper.createObjectNode();
-            imageNode.put("content", base64Image);
-            request.set("image", imageNode);
-            
-            ArrayNode features = objectMapper.createArrayNode();
-            ObjectNode feature = objectMapper.createObjectNode();
-            feature.put("type", "DOCUMENT_TEXT_DETECTION");
-            features.add(feature);
-            request.set("features", features);
-            
-            requests.add(request);
-            requestBody.set("requests", requests);
-
-            // HTTP 헤더 설정
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
-
-            // Google Vision API 호출
-            String response = restTemplate.postForObject(
-                "https://vision.googleapis.com/v1/images:annotate?key=" + apiKey,
-                entity,
-                String.class
-            );
-
-            // 응답 파싱
-            ObjectNode responseJson = objectMapper.readValue(response, ObjectNode.class);
-            ArrayNode responses = (ArrayNode) responseJson.get("responses");
-            
-            if (responses != null && responses.size() > 0) {
-                ObjectNode firstResponse = (ObjectNode) responses.get(0);
-                ObjectNode fullTextAnnotation = (ObjectNode) firstResponse.get("fullTextAnnotation");
-                
-                if (fullTextAnnotation != null && fullTextAnnotation.has("text")) {
-                    return fullTextAnnotation.get("text").asText();
-                }
-            }
-            
-            return "No text found";
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Error calling Google Vision API: " + e.getMessage(), e);
+        public OcrResult(String fullText, List<String> blNumbers) {
+            this.fullText = fullText;
+            this.blNumbers = blNumbers;
         }
+
+        public String getFullText() {
+            return fullText;
+        }
+
+        public List<String> getBlNumbers() {
+            return blNumbers;
+        }
+    }
+
+    /**
+     * 파일(PDF/이미지)을 Vision API로 OCR하고 전체 텍스트와 B/L 넘버를 함께 반환
+     */
+    public OcrResult processOcr(MultipartFile file) throws Exception {
+        final String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("");
+        final boolean isPdf = filename.toLowerCase(Locale.ROOT).endsWith(".pdf");
+
+        List<BufferedImage> pages;
+        if (isPdf) {
+            pages = imageProcessingService.pdfToImages(file);
+        } else {
+            BufferedImage img = ImageIO.read(file.getInputStream());
+            if (img == null) throw new IllegalArgumentException("Unsupported image");
+            pages = Collections.singletonList(img);
+        }
+
+        String fullText = googleVisionService.processImages(pages);
+        List<String> blNumbers = blNumberExtractorService.extractBlNumbers(fullText);
+        
+        return new OcrResult(fullText, blNumbers);
+    }
+
+    /**
+     * 파일(PDF/이미지)을 Vision API로 OCR하고 페이지 구분자와 함께 텍스트를 반환 (기존 메서드)
+     */
+    public String processOcrTextOnly(MultipartFile file) throws Exception {
+        final String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("");
+        final boolean isPdf = filename.toLowerCase(Locale.ROOT).endsWith(".pdf");
+
+        List<BufferedImage> pages;
+        if (isPdf) {
+            pages = imageProcessingService.pdfToImages(file);
+        } else {
+            BufferedImage img = ImageIO.read(file.getInputStream());
+            if (img == null) throw new IllegalArgumentException("Unsupported image");
+            pages = Collections.singletonList(img);
+        }
+
+        return googleVisionService.processImages(pages);
+    }
+
+    /**
+     * 파일을 OCR 처리하고 B/L 넘버만 추출하여 반환
+     */
+    public String processOcrForBlNumber(MultipartFile file) throws Exception {
+        // 전체 텍스트 추출
+        String fullText = processOcrTextOnly(file);
+        
+        // B/L 넘버만 추출
+        return blNumberExtractorService.extractBlNumbersOnly(fullText);
+    }
+
+    /**
+     * 파일을 OCR 처리하고 주요 B/L 넘버 하나만 반환
+     */
+    public String processOcrForPrimaryBlNumber(MultipartFile file) throws Exception {
+        // 전체 텍스트 추출
+        String fullText = processOcrTextOnly(file);
+        
+        // 주요 B/L 넘버 추출
+        return blNumberExtractorService.extractPrimaryBlNumber(fullText);
     }
 }
